@@ -107,8 +107,38 @@ def test_get_comment(yaml):
     )
     assert get_comment(tree, "hello") == ""
 
-    tree = yaml.load("hello: world  # Use a `LoadBalancer`.")
-    assert get_comment(tree, "hello") == "Use a `LoadBalancer`."
+
+def test_top_comment(yaml):
+    from frigate.gen import get_comment
+
+    # tree = yaml.load("hello: world  # Use a `LoadBalancer`.")
+    # assert get_comment(tree, "hello") == "Use a `LoadBalancer`."
+
+    tree = yaml.load(
+        """#-- this is the comment
+        hello: world"""
+    )
+    comment = get_comment(tree, "hello")
+    assert comment == "this is the comment"
+
+    tree = yaml.load(
+        """
+        # This is not the comment you want
+        #-- this is the comment
+        hello: world"""
+    )
+    comment = get_comment(tree, "hello")
+    assert comment == "this is the comment"
+
+    tree = yaml.load(
+        """
+    # this is not the comment you are looking for
+    #-- This is one valid comment but the other has higher priority
+    hello: world  # this is the comment
+    # this is also not the comment
+    """
+    )
+    assert get_comment(tree, "hello") == "this is the comment"
 
 
 def test_clean_comment():
@@ -131,10 +161,10 @@ def test_traversal(simple_chart, rich_chart):
     rich_output = values
 
     assert [
-        "replicaCount",
-        "number of nginx pod replicas to create",
-        "1",
-    ] in rich_output
+               "replicaCount",
+               "number of nginx pod replicas to create",
+               "1",
+           ] in rich_output
 
 
 def test_custom_template(rich_chart_path):
@@ -151,14 +181,18 @@ def test_deps(deps_chart_path):
     docs = gen(deps_chart_path, "markdown")
 
     assert "simple.image.repository" in docs
-    [tag_line] = [line for line in docs.splitlines() if "simple.image.tag" in line]
+    [tag_line] = [line for line in docs.splitlines()
+                  if "simple.image.tag" in line]
     assert "mainline" in tag_line
 
 
 def test_squash_duplicates():
     from frigate.gen import squash_duplicate_values
 
-    values = squash_duplicate_values([["hello", "", "world"], ["hello", "", "there"]])
+    values = squash_duplicate_values(
+        [["hello", "", "world"],
+         ["hello", "", "there"]]
+    )
 
     assert len(values) == 1
     assert values[0][2] == "world"
