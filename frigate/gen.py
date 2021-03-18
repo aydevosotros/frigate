@@ -6,7 +6,7 @@ import subprocess
 
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap, Comment
+from ruamel.yaml.comments import CommentedMap
 
 from frigate import TEMPLATES_PATH, DOTFILE_NAME
 from frigate.utils import flatten
