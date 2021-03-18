@@ -6,7 +6,7 @@ import subprocess
 
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, Comment
 
 from frigate import TEMPLATES_PATH, DOTFILE_NAME
 from frigate.utils import flatten
@@ -154,12 +154,19 @@ def get_comment(tree, key):
         str: Comment
 
     """
-    comments = tree.ca.items[key]
-    linecol = tree.lc.data[key]
-    for comment in flatten(comments):
-        if comment is not None and comment.start_mark.line == linecol[0]:
-            first_line = comment.value.strip().split("\n")[0]
-            return clean_comment(first_line)
+    if key in tree.ca.items:
+        comments = tree.ca.items[key]
+        linecol = tree.lc.data[key]
+        for comment in flatten(comments):
+            if comment is not None and comment.start_mark.line == linecol[0]:
+                first_line = comment.value.strip().split("\n")[0]
+                return clean_comment(first_line)
+    if tree.ca.comment is not None:
+        for comment in tree.ca.comment:
+            if comment is not None:
+                for item in comment:
+                    if item.value.startswith('#-- '):
+                        return item.value.lstrip('#-- ').rstrip('\n')
     return ""
 
 
